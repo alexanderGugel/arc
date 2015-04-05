@@ -139,6 +139,10 @@ func (a *ARC) Get(key interface{}) (value interface{}, ok bool) {
 	return nil, ok
 }
 
+func (a *ARC) Len() int {
+	return a.T1.Len() + a.T2.Len() + a.B1.Len() + a.B2.Len()
+}
+
 func (a *ARC) delLRU(list *list.List) {
 	lru := list.Back()
 	list.Remove(lru)
