@@ -38,3 +38,22 @@ func TestBasic(t *testing.T) {
         t.Error("Didn't set \"Hallo\" to \"Welt\"")
     }
 }
+
+func TestBasicReplace(t *testing.T) {
+    cache := New(3)
+
+    cache.Put("Hello", "Hallo")
+    cache.Put("World", "Welt")
+    cache.Get("World")
+    cache.Put("Cache", "Cache")
+    cache.Put("Replace", "Ersetzen")
+
+    value, ok := cache.Get("World")
+    if !ok || value != "Welt" {
+        t.Error("ARC should have replaced \"Hello\"")
+    }
+
+    if cache.Len() != 3 {
+        t.Error("ARC should have a maximum size of 3")
+    }
+}
