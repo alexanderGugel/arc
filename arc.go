@@ -5,22 +5,6 @@ import (
     "container/list"
 )
 
-func min(x, y int) int {
-	if x < y {
-		return x
-	} else {
-		return y
-	}
-}
-
-func max(x, y int) int {
-	if x < y {
-		return x
-	} else {
-		return y
-	}
-}
-
 type ARC struct {
     p int
     c int
@@ -29,29 +13,6 @@ type ARC struct {
     t2 *list.List
     b2 *list.List
     cache map[interface{}]*entry
-}
-
-type entry struct {
-	key interface{}
-	value interface{}
-	ll *list.List
-	el *list.Element
-}
-
-func (e *entry) setLRU(list *list.List) {
-	e.ll = list
-	e.el = e.ll.PushBack(e)
-}
-
-func (e *entry) setMRU(list *list.List) {
-	e.ll = list
-	e.el = e.ll.PushFront(e)
-}
-
-func (e *entry) detach() {
-	if e.ll != nil {
-		e.ll.Remove(e.el)
-	}
 }
 
 func (a *ARC) req(ent *entry) {
