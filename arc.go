@@ -100,7 +100,7 @@ func (a *ARC) Get(key interface{}) (value interface{}, ok bool) {
 }
 
 func (a *ARC) Len() int {
-	return a.t1.Len() + a.t2.Len() + a.b1.Len() + a.b2.Len()
+	return len(a.cache)
 }
 
 func (a *ARC) delLRU(list *list.List) {
