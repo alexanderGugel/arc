@@ -115,8 +115,8 @@ func (a *ARC) req(ent *entry) {
 			if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() >= a.c {
 				if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() == 2*a.c {
 					a.delLRU(a.b2)
+					a.replace(ent) // FIXME this should be outside the if clause
 				}
-				a.replace(ent)
 			}
 		}
 	}
