@@ -115,8 +115,8 @@ func (a *ARC) req(ent *entry) {
 			if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() >= a.c {
 				if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() == 2*a.c {
 					a.delLRU(a.b2)
-					a.replace(ent)
 				}
+				a.replace(ent)
 			}
 		}
 	}
@@ -130,10 +130,10 @@ func (a *ARC) delLRU(list *list.List) {
 
 func (a *ARC) replace(ent *entry) {
 	if a.t1.Len() > 0 && ((a.t1.Len() > a.p) || (ent.ll == a.b2 && a.t1.Len() == a.p)) {
-		lru := a.t1.Back().Value.(entry)
+		lru := a.t1.Back().Value.(*entry)
 		lru.setMRU(a.b1)
 	} else {
-		lru := a.t2.Back().Value.(entry)
+		lru := a.t2.Back().Value.(*entry)
 		lru.setMRU(a.b2)
 	}
 }
