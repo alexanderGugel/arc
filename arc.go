@@ -14,6 +14,75 @@ type ARC struct {
 	cache map[interface{}]*entry
 }
 
+// New returns a new [Adaptive Replacement Cache (ARC)](http://en.wikipedia.org/wiki/Adaptive_replacement_cache).
+func New(c int) *ARC {
+	return &ARC{
+		p:     0,
+		c:     c,
+		t1:    list.New(),
+		b1:    list.New(),
+		t2:    list.New(),
+		b2:    list.New(),
+		cache: make(map[interface{}]*entry, c),
+	}
+}
+
+// Put inserts a new key-value pair into the cache.
+// This optimizes future access to this entry (side effect).
+func (a *ARC) Put(key, value interface{}) bool {
+	ent, ok := a.cache[key]
+	if ok != true {
+		// Case IV
+
+		ent = &entry{
+			key:   key,
+			value: value,
+		}
+
+		if a.t1.Len()+a.b1.Len() == a.c {
+			// Case A
+			if a.t1.Len() < a.c {
+				a.delLRU(a.b1)
+				a.replace(ent)
+			} else {
+				a.delLRU(a.t1)
+			}
+		} else if a.t1.Len()+a.b1.Len() < a.c {
+			// Case B
+			if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() >= a.c {
+				if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() == 2*a.c {
+					a.delLRU(a.b2)
+					a.replace(ent)
+				}
+			}
+		}
+
+		a.cache[key] = ent
+		ent.setMRU(a.t1)
+	} else {
+		ent.value = value
+		a.req(ent)
+	}
+	return ok
+}
+
+// Get retrieves a previously via Set inserted entry.
+// This optimizes future access to this entry (side effect).
+func (a *ARC) Get(key interface{}) (value interface{}, ok bool) {
+	ent, ok := a.cache[key]
+	if ok {
+		a.req(ent)
+		return ent.value, true
+	}
+	return nil, ok
+}
+
+// Len determines the number of currently cached entries.
+// This method is side-effect free in the sense that it does not attempt to optimize random cache access.
+func (a *ARC) Len() int {
+	return len(a.cache)
+}
+
 func (a *ARC) req(ent *entry) {
 	if ent.ll == a.t1 || ent.ll == a.t2 {
 		// Case I
@@ -53,56 +122,6 @@ func (a *ARC) req(ent *entry) {
 	}
 }
 
-func (a *ARC) Put(key, value interface{}) bool {
-	ent, ok := a.cache[key]
-	if ok != true {
-		// Case IV
-
-		ent = &entry{
-			key:   key,
-			value: value,
-		}
-
-		if a.t1.Len()+a.b1.Len() == a.c {
-			// Case A
-			if a.t1.Len() < a.c {
-				a.delLRU(a.b1)
-				a.replace(ent)
-			} else {
-				a.delLRU(a.t1)
-			}
-		} else if a.t1.Len()+a.b1.Len() < a.c {
-			// Case B
-			if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() >= a.c {
-				if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() == 2*a.c {
-					a.delLRU(a.b2)
-					a.replace(ent)
-				}
-			}
-		}
-
-		a.cache[key] = ent
-		ent.setMRU(a.t1)
-	} else {
-		ent.value = value
-		a.req(ent)
-	}
-	return ok
-}
-
-func (a *ARC) Get(key interface{}) (value interface{}, ok bool) {
-	ent, ok := a.cache[key]
-	if ok {
-		a.req(ent)
-		return ent.value, true
-	}
-	return nil, ok
-}
-
-func (a *ARC) Len() int {
-	return len(a.cache)
-}
-
 func (a *ARC) delLRU(list *list.List) {
 	lru := list.Back()
 	list.Remove(lru)
@@ -116,17 +135,5 @@ func (a *ARC) replace(ent *entry) {
 	} else {
 		lru := a.t2.Back().Value.(entry)
 		lru.setMRU(a.b2)
-	}
-}
-
-func New(c int) *ARC {
-	return &ARC{
-		p:     0,
-		c:     c,
-		t1:    list.New(),
-		b1:    list.New(),
-		t2:    list.New(),
-		b2:    list.New(),
-		cache: make(map[interface{}]*entry, c),
 	}
 }
