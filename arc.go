@@ -63,32 +63,29 @@ func (e *entry) detach() {
 // 	}
 // }
 
-// func (a *ARC) req(ent *entry) {
-// 	if ent.ll == a.T1 || ent.ll == a.T2 {
-// 		// Case I
-// 		a.T1.Remove(ent.el)
-// 		a.T2.Remove(ent.el)
-
-// 		ent.ll = a.T2
-// 		ent.el = a.T2.PushFront(entry) // MRU position
-// 		return ent
-// 	}
-// 	if ent.ll == a.B1 {
-// 		// Case II
-// 		// Cache Miss in T1 and T2
+func (a *ARC) req(ent *entry) {
+	if ent.ll == a.T1 || ent.ll == a.T2 {
+		// Case I
+		ent.setMRU(a.T2)
+	}
+	if ent.ll == a.B1 {
+		// Case II
+		// Cache Miss in T1 and T2
 		
-// 		// Adaption
-//         if a.B1.Len() >= a.B2.Len() {
-//             d := 1
-//         } else {
-//             d := a.B2.Len() / a.B1.Len()
-//         }
-// 		a.p = min(a.p + d, a.c)
+		// Adaptation
+		var d int
+        if a.B1.Len() >= a.B2.Len() {
+            d = 1
+        } else {
+            d = a.B2.Len() / a.B1.Len()
+        }
+		a.p = min(a.p + d, a.c)
 
-// 		c.replace(ent)
-// 	}
+		a.replace(ent)
+		ent.setMRU(a.T2)
+	}
 
-// }
+}
 
 func (a *ARC) Put(key, value interface{}) bool {
 	ent, ok := a.cache[key]
@@ -122,7 +119,7 @@ func (a *ARC) Put(key, value interface{}) bool {
 		ent.setMRU(a.T1)
 	} else {
 		ent.value = value
-		// req(ent)
+		a.req(ent)
 	}
 	return ok
 }
