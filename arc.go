@@ -54,15 +54,6 @@ func (e *entry) detach() {
 	}
 }
 
-
-// func (a *ARC) replace(ent *entry) {
-// 	if a.T1.Len() > 0 && (a.T1.Len() > a.p || (ent.ll == a.B2 && a.T1.Len() == a.p)) {
-// 		// lru := a.T1.Back()
-// 		// a.T1.Remove(lru)
-// 		// lru.el = a.B1.PushFront()
-// 	}
-// }
-
 func (a *ARC) req(ent *entry) {
 	if ent.ll == a.T1 || ent.ll == a.T2 {
 		// Case I
@@ -139,10 +130,19 @@ func (a *ARC) Put(key, value interface{}) bool {
 	return ok
 }
 
+func (a *ARC) Get(key interface{}) (value interface{}, ok bool) {
+	ent, ok := a.cache[key]
+	if ok {
+		a.req(ent)
+		return ent.value, true
+	}
+	return nil, ok
+}
+
 func (a *ARC) delLRU(list *list.List) {
 	lru := list.Back()
 	list.Remove(lru)
-	delete(a.cache, lru.Value.(entry).key)
+	delete(a.cache, lru.Value.(*entry).key)
 }
 
 func (a *ARC) replace(ent *entry) {
@@ -154,12 +154,6 @@ func (a *ARC) replace(ent *entry) {
 		lru.setMRU(a.B2)
 	}
 }
-
-
-
-// func (a *ARC) Get(key {}interface) (value {}interface, ok bool) {
-
-// }
 
 func New(c int) *ARC {
 	return &ARC{
@@ -173,61 +167,6 @@ func New(c int) *ARC {
 	}
 }
 
-// func (c *ARC) Add(key, value interface{}) {
-//     if c.T1.Has(key) || c.T2.Has(key) {
-//         c.T1.Remove(key)
-//         c.T2.Add(key, value)
-//     } else if c.B1.Has(key) {
-//         if c.B1.Len() >= c.B2.Len() {
-//             d := 1
-//         } else {
-//             d := c.B2.Len() / c.B1.Len()
-//         }
-//         c.p = min(c.p + d, c.c)
-
-//         c.replace(key, value, c.p)
-//         c.B1.Remove(key)
-//         c.T2.Add(key, value)
-//     } else if c.B2.Has(key) {
-//         if c.B2.Len() >= c.B1.Len() {
-//             d := 1
-//         } else {
-//             d := c.B1.Len() / c.B2.Len()
-//         }
-//         c.p = min(c.p - d, 0)
-//         // TODO replace
-//     } else {
-//         if c.T1.Len() + c.B1.Len() == c.c {
-//             if c.T1.Len() < c.c {
-//                 // TODO
-//             } else {
-//                 // TODO
-//             }
-//         } else if c.T1.Len() + c.B1.Len() < c.c {
-//         	if c.T1.Len() + c.T2.Len() + c.B2.Len() + c.B1.Len() >= c.c {
-//         		// TODO
-//         	}
-//         }
-//         // TODO
-//     }
-// }
-
-// // Get looks up a key's value from the cache.
-// func (c *ARC) Get(key interface{}) (value interface{}, ok bool) {
-// 	// TODO
-// }
-
-// func (c *ARC) replace(key interface{}, value interface{}, p int) {
-// 	if c.T1.Len() > 0 && (c.T1.Len() > c.p || (c.B2.Has(key) && c.T1.Len() == c.p)) {
-// 		c.T1.Remove(key)
-// 		c.B1.Add(key, value)
-// 	} else {
-// 		c.T2.Remove(key)
-// 		c.B2.Add(key, value)
-// 	}
-// }
-
-
 func main() {
 
 	cache := New(3)
@@ -235,11 +174,10 @@ func main() {
 	cache.Put("Hello", "World")
 	cache.Put("Hello2", "World2")
 	cache.Put("Hello3", "World3")
-
 	cache.Put("Hello", "World")
-	cache.Put("Hello2", "World2")
-	cache.Put("Hello3", "World3")
 
+
+	fmt.Println(cache.Get("Hello"))
 
     fmt.Println("Hello World")
 }
