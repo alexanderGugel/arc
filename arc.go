@@ -1,18 +1,18 @@
 package main
 
 import (
-    "fmt"
-    "container/list"
+	"container/list"
+	"fmt"
 )
 
 type ARC struct {
-    p int
-    c int
-    t1 *list.List
-    b1 *list.List
-    t2 *list.List
-    b2 *list.List
-    cache map[interface{}]*entry
+	p     int
+	c     int
+	t1    *list.List
+	b1    *list.List
+	t2    *list.List
+	b2    *list.List
+	cache map[interface{}]*entry
 }
 
 func (a *ARC) req(ent *entry) {
@@ -23,15 +23,15 @@ func (a *ARC) req(ent *entry) {
 	if ent.ll == a.b1 {
 		// Case II
 		// Cache Miss in t1 and t2
-		
+
 		// Adaptation
 		var d int
-        if a.b1.Len() >= a.b2.Len() {
-            d = 1
-        } else {
-            d = a.b2.Len() / a.b1.Len()
-        }
-		a.p = min(a.p + d, a.c)
+		if a.b1.Len() >= a.b2.Len() {
+			d = 1
+		} else {
+			d = a.b2.Len() / a.b1.Len()
+		}
+		a.p = min(a.p+d, a.c)
 
 		a.replace(ent)
 		ent.setMRU(a.t2)
@@ -39,15 +39,15 @@ func (a *ARC) req(ent *entry) {
 	if ent.ll == a.b2 {
 		// Case III
 		// Cache Miss in t1 and t2
-		
+
 		// Adaptation
 		var d int
-        if a.b2.Len() >= a.b1.Len() {
-            d = 1
-        } else {
-            d = a.b1.Len() / a.b2.Len()
-        }
-		a.p = max(a.p - d, 0)
+		if a.b2.Len() >= a.b1.Len() {
+			d = 1
+		} else {
+			d = a.b1.Len() / a.b2.Len()
+		}
+		a.p = max(a.p-d, 0)
 
 		a.replace(ent)
 		ent.setMRU(a.t2)
@@ -60,11 +60,11 @@ func (a *ARC) Put(key, value interface{}) bool {
 		// Case IV
 
 		ent = &entry{
-			key: key,
+			key:   key,
 			value: value,
 		}
 
-		if a.t1.Len() + a.b1.Len() == a.c {
+		if a.t1.Len()+a.b1.Len() == a.c {
 			// Case A
 			if a.t1.Len() < a.c {
 				a.delLRU(a.b1)
@@ -72,10 +72,10 @@ func (a *ARC) Put(key, value interface{}) bool {
 			} else {
 				a.delLRU(a.t1)
 			}
-		} else if a.t1.Len() + a.b1.Len() < a.c {
+		} else if a.t1.Len()+a.b1.Len() < a.c {
 			// Case B
-			if a.t1.Len() + a.t2.Len() + a.b1.Len() + a.b2.Len() >= a.c {
-				if a.t1.Len() + a.t2.Len() + a.b1.Len() + a.b2.Len() == 2*a.c {
+			if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() >= a.c {
+				if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() == 2*a.c {
 					a.delLRU(a.b2)
 					a.replace(ent)
 				}
@@ -122,12 +122,12 @@ func (a *ARC) replace(ent *entry) {
 
 func New(c int) *ARC {
 	return &ARC{
-		p: 0,
-		c: c,
-		t1: list.New(),
-		b1: list.New(),
-		t2: list.New(),
-		b2: list.New(),
+		p:     0,
+		c:     c,
+		t1:    list.New(),
+		b1:    list.New(),
+		t2:    list.New(),
+		b2:    list.New(),
 		cache: make(map[interface{}]*entry, c),
 	}
 }
@@ -141,8 +141,7 @@ func main() {
 	cache.Put("Hello3", "World3")
 	cache.Put("Hello", "World")
 
-
 	fmt.Println(cache.Get("Hello"))
 
-    fmt.Println("Hello World")
+	fmt.Println("Hello World")
 }

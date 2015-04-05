@@ -1,17 +1,17 @@
 package main
 
 func min(x, y int) int {
-    if x < y {
-        return x
-    } else {
-        return y
-    }
+	if x < y {
+		return x
+	} else {
+		return y
+	}
 }
 
 func max(x, y int) int {
-    if x < y {
-        return x
-    } else {
-        return y
-    }
+	if x < y {
+		return x
+	} else {
+		return y
+	}
 }
