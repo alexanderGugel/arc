@@ -33,32 +33,13 @@ func New(c int) *ARC {
 func (a *ARC) Put(key, value interface{}) bool {
 	ent, ok := a.cache[key]
 	if ok != true {
-		// Case IV
-
 		ent = &entry{
 			key:   key,
 			value: value,
 		}
 
-		if a.t1.Len()+a.b1.Len() == a.c {
-			// Case A
-			if a.t1.Len() < a.c {
-				a.delLRU(a.b1)
-				a.replace(ent)
-			} else {
-				a.delLRU(a.t1)
-			}
-		} else if a.t1.Len()+a.b1.Len() < a.c {
-			// Case B
-			if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() >= a.c {
-				if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() == 2*a.c {
-					a.delLRU(a.b2)
-					a.replace(ent)
-				}
-			}
-		}
-
 		a.cache[key] = ent
+		a.req(ent)
 		ent.setMRU(a.t1)
 	} else {
 		ent.value = value
@@ -88,8 +69,7 @@ func (a *ARC) req(ent *entry) {
 	if ent.ll == a.t1 || ent.ll == a.t2 {
 		// Case I
 		ent.setMRU(a.t2)
-	}
-	if ent.ll == a.b1 {
+	} else if ent.ll == a.b1 {
 		// Case II
 		// Cache Miss in t1 and t2
 
@@ -104,8 +84,7 @@ func (a *ARC) req(ent *entry) {
 
 		a.replace(ent)
 		ent.setMRU(a.t2)
-	}
-	if ent.ll == a.b2 {
+	} else if ent.ll == a.b2 {
 		// Case III
 		// Cache Miss in t1 and t2
 
@@ -120,6 +99,26 @@ func (a *ARC) req(ent *entry) {
 
 		a.replace(ent)
 		ent.setMRU(a.t2)
+	} else if ent.ll == nil {
+		// Case IV
+
+		if a.t1.Len()+a.b1.Len() == a.c {
+			// Case A
+			if a.t1.Len() < a.c {
+				a.delLRU(a.b1)
+				a.replace(ent)
+			} else {
+				a.delLRU(a.t1)
+			}
+		} else if a.t1.Len()+a.b1.Len() < a.c {
+			// Case B
+			if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() >= a.c {
+				if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() == 2*a.c {
+					a.delLRU(a.b2)
+					a.replace(ent)
+				}
+			}
+		}
 	}
 }
 
