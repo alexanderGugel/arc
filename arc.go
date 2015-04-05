@@ -24,10 +24,10 @@ func max(x, y int) int {
 type ARC struct {
     p int
     c int
-    T1 *list.List
-    B1 *list.List
-    T2 *list.List
-    B2 *list.List
+    t1 *list.List
+    b1 *list.List
+    t2 *list.List
+    b2 *list.List
     cache map[interface{}]*entry
 }
 
@@ -55,41 +55,41 @@ func (e *entry) detach() {
 }
 
 func (a *ARC) req(ent *entry) {
-	if ent.ll == a.T1 || ent.ll == a.T2 {
+	if ent.ll == a.t1 || ent.ll == a.t2 {
 		// Case I
-		ent.setMRU(a.T2)
+		ent.setMRU(a.t2)
 	}
-	if ent.ll == a.B1 {
+	if ent.ll == a.b1 {
 		// Case II
-		// Cache Miss in T1 and T2
+		// Cache Miss in t1 and t2
 		
 		// Adaptation
 		var d int
-        if a.B1.Len() >= a.B2.Len() {
+        if a.b1.Len() >= a.b2.Len() {
             d = 1
         } else {
-            d = a.B2.Len() / a.B1.Len()
+            d = a.b2.Len() / a.b1.Len()
         }
 		a.p = min(a.p + d, a.c)
 
 		a.replace(ent)
-		ent.setMRU(a.T2)
+		ent.setMRU(a.t2)
 	}
-	if ent.ll == a.B2 {
+	if ent.ll == a.b2 {
 		// Case III
-		// Cache Miss in T1 and T2
+		// Cache Miss in t1 and t2
 		
 		// Adaptation
 		var d int
-        if a.B2.Len() >= a.B1.Len() {
+        if a.b2.Len() >= a.b1.Len() {
             d = 1
         } else {
-            d = a.B1.Len() / a.B2.Len()
+            d = a.b1.Len() / a.b2.Len()
         }
 		a.p = max(a.p - d, 0)
 
 		a.replace(ent)
-		ent.setMRU(a.T2)
+		ent.setMRU(a.t2)
 	}
 }
 
@@ -103,26 +103,26 @@ func (a *ARC) Put(key, value interface{}) bool {
 			value: value,
 		}
 
-		if a.T1.Len() + a.B1.Len() == a.c {
+		if a.t1.Len() + a.b1.Len() == a.c {
 			// Case A
-			if a.T1.Len() < a.c {
-				a.delLRU(a.B1)
+			if a.t1.Len() < a.c {
+				a.delLRU(a.b1)
 				a.replace(ent)
 			} else {
-				a.delLRU(a.T1)
+				a.delLRU(a.t1)
 			}
-		} else if a.T1.Len() + a.B1.Len() < a.c {
+		} else if a.t1.Len() + a.b1.Len() < a.c {
 			// Case B
-			if a.T1.Len() + a.T2.Len() + a.B1.Len() + a.B2.Len() >= a.c {
-				if a.T1.Len() + a.T2.Len() + a.B1.Len() + a.B2.Len() == 2*a.c {
-					a.delLRU(a.B2)
+			if a.t1.Len() + a.t2.Len() + a.b1.Len() + a.b2.Len() >= a.c {
+				if a.t1.Len() + a.t2.Len() + a.b1.Len() + a.b2.Len() == 2*a.c {
+					a.delLRU(a.b2)
 					a.replace(ent)
 				}
 			}
 		}
 
 		a.cache[key] = ent
-		ent.setMRU(a.T1)
+		ent.setMRU(a.t1)
 	} else {
 		ent.value = value
 		a.req(ent)
@@ -140,7 +140,7 @@ func (a *ARC) Get(key interface{}) (value interface{}, ok bool) {
 }
 
 func (a *ARC) Len() int {
-	return a.T1.Len() + a.T2.Len() + a.B1.Len() + a.B2.Len()
+	return a.t1.Len() + a.t2.Len() + a.b1.Len() + a.b2.Len()
 }
 
 func (a *ARC) delLRU(list *list.List) {
@@ -150,12 +150,12 @@ func (a *ARC) delLRU(list *list.List) {
 }
 
 func (a *ARC) replace(ent *entry) {
-	if a.T1.Len() > 0 && ((a.T1.Len() > a.p) || (ent.ll == a.B2 && a.T1.Len() == a.p)) {
-		lru := a.T1.Back().Value.(entry)
-		lru.setMRU(a.B1)
+	if a.t1.Len() > 0 && ((a.t1.Len() > a.p) || (ent.ll == a.b2 && a.t1.Len() == a.p)) {
+		lru := a.t1.Back().Value.(entry)
+		lru.setMRU(a.b1)
 	} else {
-		lru := a.T2.Back().Value.(entry)
-		lru.setMRU(a.B2)
+		lru := a.t2.Back().Value.(entry)
+		lru.setMRU(a.b2)
 	}
 }
 
@@ -163,10 +163,10 @@ func New(c int) *ARC {
 	return &ARC{
 		p: 0,
 		c: c,
-		T1: list.New(),
-		B1: list.New(),
-		T2: list.New(),
-		B2: list.New(),
+		t1: list.New(),
+		b1: list.New(),
+		t2: list.New(),
+		b2: list.New(),
 		cache: make(map[interface{}]*entry, c),
 	}
 }
