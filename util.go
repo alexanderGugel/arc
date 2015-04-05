@@ -1,4 +1,4 @@
-package main
+package arc
 
 func min(x, y int) int {
 	if x < y {

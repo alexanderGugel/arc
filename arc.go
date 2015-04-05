@@ -1,8 +1,7 @@
-package main
+package arc
 
 import (
 	"container/list"
-	"fmt"
 )
 
 type ARC struct {
@@ -130,18 +129,4 @@ func New(c int) *ARC {
 		b2:    list.New(),
 		cache: make(map[interface{}]*entry, c),
 	}
-}
-
-func main() {
-
-	cache := New(3)
-
-	cache.Put("Hello", "World")
-	cache.Put("Hello2", "World2")
-	cache.Put("Hello3", "World3")
-	cache.Put("Hello", "World")
-
-	fmt.Println(cache.Get("Hello"))
-
-	fmt.Println("Hello World")
 }
