@@ -84,7 +84,22 @@ func (a *ARC) req(ent *entry) {
 		a.replace(ent)
 		ent.setMRU(a.T2)
 	}
+	if ent.ll == a.B2 {
+		// Case III
+		// Cache Miss in T1 and T2
+		
+		// Adaptation
+		var d int
+        if a.B2.Len() >= a.B1.Len() {
+            d = 1
+        } else {
+            d = a.B1.Len() / a.B2.Len()
+        }
+		a.p = max(a.p - d, 0)
 
+		a.replace(ent)
+		ent.setMRU(a.T2)
+	}
 }
 
 func (a *ARC) Put(key, value interface{}) bool {
