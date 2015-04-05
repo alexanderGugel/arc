@@ -3,4 +3,4 @@
 arc
 ===
 
-An Adaptive Replacement Cache (ARC) written in [Go](http://golang.org/).
+An [Adaptive Replacement Cache (ARC)](http://web.archive.org/web/20150405221102/https://www.usenix.org/legacy/event/fast03/tech/full_papers/megiddo/megiddo.pdf) written in [Go](http://golang.org/).

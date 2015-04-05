@@ -1,3 +1,4 @@
+// Package arc implements an Adaptive replacement cache
 package arc
 
 import (
@@ -14,7 +15,7 @@ type ARC struct {
 	cache map[interface{}]*entry
 }
 
-// New returns a new [Adaptive Replacement Cache (ARC)](http://en.wikipedia.org/wiki/Adaptive_replacement_cache).
+// New returns a new Adaptive Replacement Cache (ARC).
 func New(c int) *ARC {
 	return &ARC{
 		p:     0,
