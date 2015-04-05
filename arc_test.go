@@ -25,23 +25,16 @@ func TestBasic(t *testing.T) {
         t.Error("Inserting the same entry multiple times shouldn't increase cache size")
     }
 
-    // if cache.Get("Hello") == "World1" {
-    //     t.Error("Didn't update \"Hello\" to \"World1\"")
-    // }
+    if val, ok = cache.Get("Hello"); val != "World1" || ok != true {
+        t.Error("Didn't update \"Hello\" to \"World1\"")
+    }
     
-    // cache.Put("Hallo", "Welt")
-    // if cache.Len() != 2 {
-    //     t.Error("Inserting two different entries should result into lenght=2")
-    // }
+    cache.Put("Hallo", "Welt")
+    if cache.Len() != 2 {
+        t.Error("Inserting two different entries should result into lenght=2")
+    }
 
-    // if cache.Get("Hallo") == "Welt" {
-    //     t.Error("Didn't set \"Hallo\" to \"Welt\"")
-    // }
-
-
-    // cache.Put("Hello2", "World2")
-    // cache.Put("Hello3", "World3")
-    // cache.Put("Hello", "World")
-    // fmt.Println(cache.Get("Hello"))
-    // fmt.Println("Hello World")
+    if val, ok = cache.Get("Hallo"); val != "Welt" || ok != true {
+        t.Error("Didn't set \"Hallo\" to \"Welt\"")
+    }
 }
