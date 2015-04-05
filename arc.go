@@ -3,7 +3,6 @@ package main
 import (
     "fmt"
     "container/list"
-    // "github.com/alexanderGugel/golang-lru"
 )
 
 func min(x, y int) int {
@@ -30,8 +29,6 @@ type ARC struct {
     T2 *list.List
     B2 *list.List
     cache map[interface{}]*entry
-    // items map[interface{}]*list.Element
-
 }
 
 type entry struct {
@@ -40,6 +37,23 @@ type entry struct {
 	ll *list.List
 	el *list.Element
 }
+
+func (e *entry) setLRU(list *list.List) {
+	e.ll = list
+	e.el = e.ll.PushBack(e)
+}
+
+func (e *entry) setMRU(list *list.List) {
+	e.ll = list
+	e.el = e.ll.PushFront(e)
+}
+
+func (e *entry) detach() {
+	if e.ll != nil {
+		e.ll.Remove(e.el)
+	}
+}
+
 
 // func (a *ARC) replace(ent *entry) {
 // 	if a.T1.Len() > 0 && (a.T1.Len() > a.p || (ent.ll == a.B2 && a.T1.Len() == a.p)) {
@@ -79,39 +93,56 @@ type entry struct {
 func (a *ARC) Put(key, value interface{}) bool {
 	ent, ok := a.cache[key]
 	if ok != true {
-		// insert entry into items
+		// Case IV
+
 		ent = &entry{
 			key: key,
 			value: value,
 		}
 
-		// Case IV
 		if a.T1.Len() + a.B1.Len() == a.c {
 			// Case A
 			if a.T1.Len() < a.c {
-				// TODO
+				a.delLRU(a.B1)
+				a.replace(ent)
 			} else {
-				// B1 empty delete LRU pakce in T1
+				a.delLRU(a.T1)
 			}
 		} else if a.T1.Len() + a.B1.Len() < a.c {
 			// Case B
 			if a.T1.Len() + a.T2.Len() + a.B1.Len() + a.B2.Len() >= a.c {
 				if a.T1.Len() + a.T2.Len() + a.B1.Len() + a.B2.Len() == 2*a.c {
-					// del LRU page in B2
-					// TODO
+					a.delLRU(a.B2)
+					a.replace(ent)
 				}
-				// REPLACE(xt, p)
 			}
 		}
 
 		a.cache[key] = ent
-		ent.ll = a.T1
-		ent.el = a.T1.PushFront(ent)
+		ent.setMRU(a.T1)
 	} else {
 		// req(ent)
 	}
 	return ok
 }
+
+func (a *ARC) delLRU(list *list.List) {
+	lru := list.Back()
+	list.Remove(lru)
+	delete(a.cache, lru.Value.(entry).key)
+}
+
+func (a *ARC) replace(ent *entry) {
+	if a.T1.Len() > 0 && ((a.T1.Len() > a.p) || (ent.ll == a.B2 && a.T1.Len() == a.p)) {
+		lru := a.T1.Back().Value.(entry)
+		lru.setMRU(a.B1)
+	} else {
+		lru := a.T2.Back().Value.(entry)
+		lru.setMRU(a.B2)
+	}
+}
+
+
 
 // func (a *ARC) Get(key {}interface) (value {}interface, ok bool) {
 
