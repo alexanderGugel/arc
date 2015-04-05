@@ -121,6 +121,7 @@ func (a *ARC) Put(key, value interface{}) bool {
 		a.cache[key] = ent
 		ent.setMRU(a.T1)
 	} else {
+		ent.value = value
 		// req(ent)
 	}
 	return ok
@@ -219,7 +220,14 @@ func main() {
 
 	cache := New(3)
 
-	cache.Put("bla", "blub")
+	cache.Put("Hello", "World")
+	cache.Put("Hello2", "World2")
+	cache.Put("Hello3", "World3")
+
+	cache.Put("Hello", "World")
+	cache.Put("Hello2", "World2")
+	cache.Put("Hello3", "World3")
+
 
     fmt.Println("Hello World")
 }
