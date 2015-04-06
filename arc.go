@@ -132,9 +132,11 @@ func (a *ARC) delLRU(list *list.List) {
 func (a *ARC) replace(ent *entry) {
 	if a.t1.Len() > 0 && ((a.t1.Len() > a.p) || (ent.ll == a.b2 && a.t1.Len() == a.p)) {
 		lru := a.t1.Back().Value.(*entry)
+		lru.value = nil
 		lru.setMRU(a.b1)
 	} else {
 		lru := a.t2.Back().Value.(*entry)
+		lru.value = nil
 		lru.setMRU(a.b2)
 	}
 }
