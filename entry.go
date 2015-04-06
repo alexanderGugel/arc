@@ -12,11 +12,13 @@ type entry struct {
 }
 
 func (e *entry) setLRU(list *list.List) {
+	e.detach()
 	e.ll = list
 	e.el = e.ll.PushBack(e)
 }
 
 func (e *entry) setMRU(list *list.List) {
+	e.detach()
 	e.ll = list
 	e.el = e.ll.PushFront(e)
 }

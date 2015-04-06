@@ -38,9 +38,8 @@ func (a *ARC) Put(key, value interface{}) bool {
 			value: value,
 		}
 
-		a.cache[key] = ent
 		a.req(ent)
-		ent.setMRU(a.t1)
+		a.cache[key] = ent
 	} else {
 		ent.value = value
 		a.req(ent)
@@ -115,10 +114,12 @@ func (a *ARC) req(ent *entry) {
 			if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() >= a.c {
 				if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() == 2*a.c {
 					a.delLRU(a.b2)
-					a.replace(ent) // FIXME this should be outside the if clause
 				}
+				a.replace(ent)
 			}
 		}
+
+		ent.setMRU(a.t1)
 	}
 }
 
