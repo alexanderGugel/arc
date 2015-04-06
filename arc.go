@@ -61,7 +61,7 @@ func (a *ARC) Get(key interface{}) (value interface{}, ok bool) {
 // Len determines the number of currently cached entries.
 // This method is side-effect free in the sense that it does not attempt to optimize random cache access.
 func (a *ARC) Len() int {
-	return len(a.cache)
+	return a.t1.Len() + a.t2.Len()
 }
 
 func (a *ARC) req(ent *entry) {
