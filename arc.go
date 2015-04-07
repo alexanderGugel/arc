@@ -1,5 +1,4 @@
 // Package arc implements an Adaptive replacement cache
-// BUG(alexanderGugel): Storing entries with nil as value is problematic for managing ghost entries (e.g. in Len())
 package arc
 
 import (
@@ -46,15 +45,17 @@ func (a *ARC) Put(key, value interface{}) bool {
 		ent = &entry{
 			key:   key,
 			value: value,
+			ghost: false,
 		}
 
 		a.req(ent)
 		a.cache[key] = ent
 	} else {
-		if ent.value == nil {
+		if ent.ghost {
 			a.len++
 		}
 		ent.value = value
+		ent.ghost = false
 		a.req(ent)
 	}
 	return ok
@@ -69,8 +70,7 @@ func (a *ARC) Get(key interface{}) (value interface{}, ok bool) {
 	ent, ok := a.cache[key]
 	if ok {
 		a.req(ent)
-		ok = ent.value != nil
-		return ent.value, true
+		return ent.value, !ent.ghost
 	}
 	return nil, false
 }
@@ -154,11 +154,13 @@ func (a *ARC) replace(ent *entry) {
 	if a.t1.Len() > 0 && ((a.t1.Len() > a.p) || (ent.ll == a.b2 && a.t1.Len() == a.p)) {
 		lru := a.t1.Back().Value.(*entry)
 		lru.value = nil
+		lru.ghost = true
 		a.len--
 		lru.setMRU(a.b1)
 	} else {
 		lru := a.t2.Back().Value.(*entry)
 		lru.value = nil
+		lru.ghost = true
 		a.len--
 		lru.setMRU(a.b2)
 	}

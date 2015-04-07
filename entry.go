@@ -9,6 +9,7 @@ type entry struct {
 	value interface{}
 	ll    *list.List
 	el    *list.Element
+	ghost bool
 }
 
 func (e *entry) setLRU(list *list.List) {
