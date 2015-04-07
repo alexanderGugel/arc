@@ -61,9 +61,10 @@ func (a *ARC) Get(key interface{}) (value interface{}, ok bool) {
 	ent, ok := a.cache[key]
 	if ok {
 		a.req(ent)
+		ok = ent.value != nil
 		return ent.value, true
 	}
-	return nil, ok
+	return nil, false
 }
 
 // Len determines the number of currently cached entries.
