@@ -1,4 +1,5 @@
 // Package arc implements an Adaptive replacement cache
+// BUG(alexanderGugel): Storing entries with nil as value is problematic for managing ghost entries (e.g. in Len())
 package arc
 
 import (
