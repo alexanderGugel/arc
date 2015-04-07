@@ -14,6 +14,7 @@ type ARC struct {
 	t2    *list.List
 	b2    *list.List
 	mutex sync.RWMutex
+	len   int
 	cache map[interface{}]*entry
 }
 
@@ -26,6 +27,7 @@ func New(c int) *ARC {
 		b1:    list.New(),
 		t2:    list.New(),
 		b2:    list.New(),
+		len:   0,
 		cache: make(map[interface{}]*entry, c),
 	}
 }
@@ -38,6 +40,8 @@ func (a *ARC) Put(key, value interface{}) bool {
 
 	ent, ok := a.cache[key]
 	if ok != true {
+		a.len++
+
 		ent = &entry{
 			key:   key,
 			value: value,
@@ -46,6 +50,9 @@ func (a *ARC) Put(key, value interface{}) bool {
 		a.req(ent)
 		a.cache[key] = ent
 	} else {
+		if ent.value == nil {
+			a.len++
+		}
 		ent.value = value
 		a.req(ent)
 	}
@@ -73,7 +80,7 @@ func (a *ARC) Len() int {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
-	return a.t1.Len() + a.t2.Len()
+	return a.len
 }
 
 func (a *ARC) req(ent *entry) {
@@ -138,6 +145,7 @@ func (a *ARC) req(ent *entry) {
 func (a *ARC) delLRU(list *list.List) {
 	lru := list.Back()
 	list.Remove(lru)
+	a.len--
 	delete(a.cache, lru.Value.(*entry).key)
 }
 
@@ -145,10 +153,12 @@ func (a *ARC) replace(ent *entry) {
 	if a.t1.Len() > 0 && ((a.t1.Len() > a.p) || (ent.ll == a.b2 && a.t1.Len() == a.p)) {
 		lru := a.t1.Back().Value.(*entry)
 		lru.value = nil
+		a.len--
 		lru.setMRU(a.b1)
 	} else {
 		lru := a.t2.Back().Value.(*entry)
 		lru.value = nil
+		a.len--
 		lru.setMRU(a.b2)
 	}
 }
