@@ -3,6 +3,7 @@ package arc
 
 import (
 	"container/list"
+	"sync"
 )
 
 type ARC struct {
@@ -12,6 +13,7 @@ type ARC struct {
 	b1    *list.List
 	t2    *list.List
 	b2    *list.List
+	mutex sync.RWMutex
 	cache map[interface{}]*entry
 }
 
@@ -31,6 +33,9 @@ func New(c int) *ARC {
 // Put inserts a new key-value pair into the cache.
 // This optimizes future access to this entry (side effect).
 func (a *ARC) Put(key, value interface{}) bool {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
 	ent, ok := a.cache[key]
 	if ok != true {
 		ent = &entry{
@@ -50,6 +55,9 @@ func (a *ARC) Put(key, value interface{}) bool {
 // Get retrieves a previously via Set inserted entry.
 // This optimizes future access to this entry (side effect).
 func (a *ARC) Get(key interface{}) (value interface{}, ok bool) {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
 	ent, ok := a.cache[key]
 	if ok {
 		a.req(ent)
@@ -61,6 +69,9 @@ func (a *ARC) Get(key interface{}) (value interface{}, ok bool) {
 // Len determines the number of currently cached entries.
 // This method is side-effect free in the sense that it does not attempt to optimize random cache access.
 func (a *ARC) Len() int {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
 	return a.t1.Len() + a.t2.Len()
 }
 
