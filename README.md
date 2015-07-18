@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/alexanderGugel/arc.svg?branch=master)](https://travis-ci.org/alexanderGugel/arc)
 
+**NEW** Looking for an ARC in Javascript? - [alexanderGugel/arc-js](https://github.com/alexanderGugel/arc-js)
+
 arc
 ===
 
