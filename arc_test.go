@@ -2,7 +2,7 @@ package arc
 
 import "testing"
 
-func TestBasic(t *testing.T) {
+func TestInsertion(t *testing.T) {
 	cache := New(3)
 	if got, want := cache.Len(), 0; got != want {
 		t.Errorf("empty cache.Len(): got %d want %d", cache.Len(), want)
@@ -25,7 +25,7 @@ func TestBasic(t *testing.T) {
 		t.Errorf("insertion of key #%d: cache.Len(): got %d want %d", want, cache.Len(), want)
 	}
 	if got, ok := cache.Get(k1); !ok || got != v1 {
-		t.Errorf("cache.Get(%q): got (%q, %t) want (%q, true)", k1, got, ok, v1)
+		t.Errorf("cache.Get(%v): got (%v,%t) want (%v,true)", k1, got, ok, v1)
 	}
 
 	// Replace existing value for a given key
@@ -34,7 +34,7 @@ func TestBasic(t *testing.T) {
 		t.Errorf("re-insertion: cache.Len(): got %d want %d", cache.Len(), want)
 	}
 	if got, ok := cache.Get(k1); !ok || got != v2 {
-		t.Errorf("re-insertion: cache.Get(%q): got (%q, %t) want (%q, true)", k1, got, ok, v2)
+		t.Errorf("re-insertion: cache.Get(%v): got (%v,%t) want (%v,true)", k1, got, ok, v2)
 	}
 
 	// Add a second different key
@@ -43,10 +43,10 @@ func TestBasic(t *testing.T) {
 		t.Errorf("insertion of key #%d: cache.Len(): got %d want %d", want, cache.Len(), want)
 	}
 	if got, ok := cache.Get(k1); !ok || got != v2 {
-		t.Errorf("cache.Get(%q): got (%q, %t) want (%q, true)", k1, got, ok, v2)
+		t.Errorf("cache.Get(%v): got (%v,%t) want (%v,true)", k1, got, ok, v2)
 	}
 	if got, ok := cache.Get(k2); !ok || got != v3 {
-		t.Errorf("cache.Get(%q): got (%q, %t) want (%q, true)", k2, got, ok, v3)
+		t.Errorf("cache.Get(%v): got (%v,%t) want (%v,true)", k2, got, ok, v3)
 	}
 
 	// Fill cache
@@ -55,9 +55,49 @@ func TestBasic(t *testing.T) {
 		t.Errorf("insertion of key #%d: cache.Len(): got %d want %d", want, cache.Len(), want)
 	}
 
-	// Exceed size, this should evict:
+	// Exceed size, this should not exceed size:
 	cache.Put(k4, v1)
 	if got, want := cache.Len(), 3; got != want {
 		t.Errorf("insertion of key out of size: cache.Len(): got %d want %d", cache.Len(), want)
+	}
+}
+
+func TestEviction(t *testing.T) {
+	size := 3
+	cache := New(size)
+	if got, want := cache.Len(), 0; got != want {
+		t.Errorf("empty cache.Len(): got %d want %d", cache.Len(), want)
+	}
+
+	tests := []struct {
+		k, v string
+	}{
+		{"k1", "v1"},
+		{"k2", "v2"},
+		{"k3", "v3"},
+		{"k4", "v4"},
+	}
+	for i, tt := range tests[:size] {
+		cache.Put(tt.k, tt.v)
+		if got, want := cache.Len(), i+1; got != want {
+			t.Errorf("insertion of key #%d: cache.Len(): got %d want %d", want, cache.Len(), want)
+		}
+	}
+
+	// Exceed size and check we don't outgrow it:
+	cache.Put(tests[size].k, tests[size].v)
+	if got := cache.Len(); got != size {
+		t.Errorf("insertion of overflow key #%d: cache.Len(): got %d want %d", 4, cache.Len(), size)
+	}
+
+	// Check that LRU got evicted:
+	if got, ok := cache.Get(tests[0].k); ok || got != nil {
+		t.Errorf("cache.Get(%v): got (%v,%t) want (<nil>,true)", tests[0].k, got, ok)
+	}
+
+	for _, tt := range tests[1:] {
+		if got, ok := cache.Get(tt.k); !ok || got != tt.v {
+			t.Errorf("cache.Get(%v): got (%v,%t) want (%v,true)", tt.k, got, ok, tt.v)
+		}
 	}
 }
