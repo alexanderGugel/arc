@@ -4,56 +4,60 @@ import "testing"
 
 func TestBasic(t *testing.T) {
 	cache := New(3)
-	if cache.Len() != 0 {
-		t.Error("Empty cache should have length 0")
+	if got, want := cache.Len(), 0; got != want {
+		t.Errorf("empty cache.Len(): got %d want %d", cache.Len(), want)
 	}
 
-	cache.Put("Hello", "World")
-	if cache.Len() != 1 {
-		t.Error("Cache should have length 1")
+	const (
+		k1 = "Hello"
+		k2 = "Hallo"
+		k3 = "Ciao"
+		k4 = "Salut"
+
+		v1 = "World"
+		v2 = "Worlds"
+		v3 = "Welt"
+	)
+
+	// Insert the first value
+	cache.Put(k1, v1)
+	if got, want := cache.Len(), 1; got != want {
+		t.Errorf("insertion of key #%d: cache.Len(): got %d want %d", want, cache.Len(), want)
+	}
+	if got, ok := cache.Get(k1); !ok || got != v1 {
+		t.Errorf("cache.Get(%q): got (%q, %t) want (%q, true)", k1, got, ok, v1)
 	}
 
-	var val interface{}
-	var ok bool
-
-	if val, ok = cache.Get("Hello"); val != "World" || ok != true {
-		t.Error("Didn't set \"Hello\" to \"World\"")
+	// Replace existing value for a given key
+	cache.Put(k1, v2)
+	if got, want := cache.Len(), 1; got != want {
+		t.Errorf("re-insertion: cache.Len(): got %d want %d", cache.Len(), want)
+	}
+	if got, ok := cache.Get(k1); !ok || got != v2 {
+		t.Errorf("re-insertion: cache.Get(%q): got (%q, %t) want (%q, true)", k1, got, ok, v2)
 	}
 
-	cache.Put("Hello", "World1")
-	if cache.Len() != 1 {
-		t.Error("Inserting the same entry multiple times shouldn't increase cache size")
+	// Add a second different key
+	cache.Put(k2, v3)
+	if got, want := cache.Len(), 2; got != want {
+		t.Errorf("insertion of key #%d: cache.Len(): got %d want %d", want, cache.Len(), want)
+	}
+	if got, ok := cache.Get(k1); !ok || got != v2 {
+		t.Errorf("cache.Get(%q): got (%q, %t) want (%q, true)", k1, got, ok, v2)
+	}
+	if got, ok := cache.Get(k2); !ok || got != v3 {
+		t.Errorf("cache.Get(%q): got (%q, %t) want (%q, true)", k2, got, ok, v3)
 	}
 
-	if val, ok = cache.Get("Hello"); val != "World1" || ok != true {
-		t.Error("Didn't update \"Hello\" to \"World1\"")
+	// Fill cache
+	cache.Put(k3, v1)
+	if got, want := cache.Len(), 3; got != want {
+		t.Errorf("insertion of key #%d: cache.Len(): got %d want %d", want, cache.Len(), want)
 	}
 
-	cache.Put("Hallo", "Welt")
-	if cache.Len() != 2 {
-		t.Error("Inserting two different entries should result into lenght=2")
-	}
-
-	if val, ok = cache.Get("Hallo"); val != "Welt" || ok != true {
-		t.Error("Didn't set \"Hallo\" to \"Welt\"")
-	}
-}
-
-func TestBasicReplace(t *testing.T) {
-	cache := New(3)
-
-	cache.Put("Hello", "Hallo")
-	cache.Put("World", "Welt")
-	cache.Get("World")
-	cache.Put("Cache", "Cache")
-	cache.Put("Replace", "Ersetzen")
-
-	value, ok := cache.Get("World")
-	if !ok || value != "Welt" {
-		t.Error("ARC should have replaced \"Hello\"")
-	}
-
-	if cache.Len() != 3 {
-		t.Error("ARC should have a maximum size of 3")
+	// Exceed size, this should evict:
+	cache.Put(k4, v1)
+	if got, want := cache.Len(), 3; got != want {
+		t.Errorf("insertion of key out of size: cache.Len(): got %d want %d", cache.Len(), want)
 	}
 }
