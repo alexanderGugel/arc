@@ -13,7 +13,7 @@ type ARC struct {
 	b1    *list.List
 	t2    *list.List
 	b2    *list.List
-	mutex sync.RWMutex
+	mutex sync.Mutex
 	len   int
 	cache map[interface{}]*entry
 }
@@ -34,12 +34,12 @@ func New(c int) *ARC {
 
 // Put inserts a new key-value pair into the cache.
 // This optimizes future access to this entry (side effect).
-func (a *ARC) Put(key, value interface{}) bool {
+func (a *ARC) Put(key, value interface{}) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
 	ent, ok := a.cache[key]
-	if ok != true {
+	if !ok {
 		a.len++
 
 		ent = &entry{
@@ -50,15 +50,14 @@ func (a *ARC) Put(key, value interface{}) bool {
 
 		a.req(ent)
 		a.cache[key] = ent
-	} else {
-		if ent.ghost {
-			a.len++
-		}
-		ent.value = value
-		ent.ghost = false
-		a.req(ent)
+		return
 	}
-	return ok
+	if ent.ghost {
+		a.len++
+	}
+	ent.value = value
+	ent.ghost = false
+	a.req(ent)
 }
 
 // Get retrieves a previously via Set inserted entry.
@@ -68,11 +67,11 @@ func (a *ARC) Get(key interface{}) (value interface{}, ok bool) {
 	defer a.mutex.Unlock()
 
 	ent, ok := a.cache[key]
-	if ok {
-		a.req(ent)
-		return ent.value, !ent.ghost
+	if !ok {
+		return nil, false
 	}
-	return nil, false
+	a.req(ent)
+	return ent.value, !ent.ghost
 }
 
 // Len determines the number of currently cached entries.
@@ -85,10 +84,11 @@ func (a *ARC) Len() int {
 }
 
 func (a *ARC) req(ent *entry) {
-	if ent.ll == a.t1 || ent.ll == a.t2 {
+	switch {
+	case ent.ll == a.t1 || ent.ll == a.t2:
 		// Case I
 		ent.setMRU(a.t2)
-	} else if ent.ll == a.b1 {
+	case ent.ll == a.b1:
 		// Case II
 		// Cache Miss in t1 and t2
 
@@ -103,7 +103,7 @@ func (a *ARC) req(ent *entry) {
 
 		a.replace(ent)
 		ent.setMRU(a.t2)
-	} else if ent.ll == a.b2 {
+	case ent.ll == a.b2:
 		// Case III
 		// Cache Miss in t1 and t2
 
@@ -118,27 +118,26 @@ func (a *ARC) req(ent *entry) {
 
 		a.replace(ent)
 		ent.setMRU(a.t2)
-	} else if ent.ll == nil {
-		// Case IV
-
-		if a.t1.Len()+a.b1.Len() == a.c {
-			// Case A
-			if a.t1.Len() < a.c {
-				a.delLRU(a.b1)
-				a.replace(ent)
-			} else {
-				a.delLRU(a.t1)
-			}
-		} else if a.t1.Len()+a.b1.Len() < a.c {
-			// Case B
-			if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() >= a.c {
-				if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() == 2*a.c {
-					a.delLRU(a.b2)
-				}
-				a.replace(ent)
-			}
+	case ent.ll == nil && a.t1.Len()+a.b1.Len() == a.c:
+		// Case IV A
+		if a.t1.Len() < a.c {
+			a.delLRU(a.b1)
+			a.replace(ent)
+		} else {
+			a.delLRU(a.t1)
 		}
-
+		ent.setMRU(a.t1)
+	case ent.ll == nil && a.t1.Len()+a.b1.Len() < a.c:
+		// Case IV B
+		if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() >= a.c {
+			if a.t1.Len()+a.t2.Len()+a.b1.Len()+a.b2.Len() == 2*a.c {
+				a.delLRU(a.b2)
+			}
+			a.replace(ent)
+		}
+		ent.setMRU(a.t1)
+	case ent.ll == nil:
+		// Case IV, not A nor B
 		ent.setMRU(a.t1)
 	}
 }
@@ -157,11 +156,11 @@ func (a *ARC) replace(ent *entry) {
 		lru.ghost = true
 		a.len--
 		lru.setMRU(a.b1)
-	} else {
-		lru := a.t2.Back().Value.(*entry)
-		lru.value = nil
-		lru.ghost = true
-		a.len--
-		lru.setMRU(a.b2)
+		return
 	}
+	lru := a.t2.Back().Value.(*entry)
+	lru.value = nil
+	lru.ghost = true
+	a.len--
+	lru.setMRU(a.b2)
 }
